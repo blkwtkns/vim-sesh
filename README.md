@@ -11,4 +11,4 @@ His functions within his plugin at: https://github.com/itchyny/vim-gitbranch - t
 
 The rest is pretty much logic from here: http://vim.wikia.com/wiki/Go_away_and_come_back that I then bent to my will.
 
-#Cheers!
+# Cheers!
