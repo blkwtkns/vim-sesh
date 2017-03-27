@@ -1,0 +1,21 @@
+*vim-sesh.txt*	Vim session management tool
+
+Version: 0.0
+Author: blkwtkns (https://github.com/blkwtkns)
+License: MIT License
+Repository: https://github.com/blkwtkns/vim-sesh
+Last Change: 2017/03/26 18:11:22.
+
+CONTENTS					*vim-sesh-contents*
+
+Introduction				|vim-sesh-introduction|
+
+==============================================================================
+INTRODUCTION					*vim-sesh-introduction*
+
+The *vim-sesh* ( *vim-sesh.vim* *vim-sesh* ) provides a functions and
+key maps which enable users to easily name sessions for projects, either 
+based on git repo and branches, the current directory if not a repo, or their
+defined name.
+
+vim:tw=78:sw=4:ts=8:ft=help:norl:noet:
