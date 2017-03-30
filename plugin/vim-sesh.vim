@@ -6,7 +6,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-" Test Caveat: -c can't be used because of the dependency
 " This will be for restore function
 fun! sesh#FindSession(...)
   let l:name = getcwd()
@@ -15,20 +14,20 @@ fun! sesh#FindSession(...)
     let l:name = substitute(finddir(".git", ".;"), "/.git", "", "")
   end
 
-  if l:name != "" && a:0 == 0
+  if l:name != ""
     let l:name = matchstr(l:name, ".*", strridx(l:name, "/") + 1)
-    let l:dir = l:name
-    " let l:branch = GitInfo()
     let l:branch = sesh#Gbranch_name()
-    let l:name = l:name . '.' . l:branch
+    let l:dir = l:name . "/" . l:branch
+    if a:0 == 0
+      let l:name = l:name . '.' . l:branch
+    else 
+      let l:name = a:1
+    end
   else
     let l:name = getcwd()
     let l:name = matchstr(l:name, ".*", strridx(l:name, "/") + 1)
     let l:dir = l:name
-
-    if a:1 != ""
-      let l:name = a:1
-    end
+    let l:name = a:1
   end
     return l:dir . '/' . l:name . '.vim'
 endfun
@@ -58,20 +57,27 @@ fun! sesh#CreateSession(...)
     let l:name = substitute(finddir(".git", ".;"), "/.git", "", "")
   end
 
-  " Both sides of conditional create appropriate dir if not present
+  " Both sides of conditional create appropriate dirs if not present
   " If pass first check, do git branch naming (if no name given)
   " If doesn't pass, do naming after directory or name given
-  if l:name != "" && a:0 == 0
+  if l:name != ""
     let l:name = matchstr(l:name, ".*", strridx(l:name, "/") + 1)
 
-    if !isdirectory($HOME . "/nvim.local/sessions/" . l:name)
-      call mkdir($HOME . "/nvim.local/sessions/" . l:name, "p")
+    " let l:dir = l:name
+    let l:branch = sesh#Gbranch_name()
+
+    if !isdirectory($HOME . "/nvim.local/sessions/" . l:name . "/" . l:branch)
+      call mkdir($HOME . "/nvim.local/sessions/" . l:name . "/" . l:branch, "p")
     endif
 
-    let l:dir = l:name
-    " let l:branch = GitInfo()
-    let l:branch = sesh#Gbranch_name()
-    let l:name = l:name . '.' . l:branch
+    let l:dir = l:name . "/" . l:branch
+
+    if a:1 == ""
+      let l:name = l:name . '.' . l:branch
+    else
+      let l:name = a:1
+    end
+
   else
     let l:name = getcwd()
     let l:name = matchstr(l:name, ".*", strridx(l:name, "/") + 1)
@@ -81,36 +87,29 @@ fun! sesh#CreateSession(...)
       call mkdir($HOME . "/nvim.local/sessions/" . l:name, "p")
     endif
 
-    if a:1 != ""
-      let l:name = a:1
-    end
+    let l:name = a:1
   end
     return l:dir . '/' . l:name . '.vim'
 endfun
 
 fun! sesh#SaveSession(...)
   if a:0 == 0
-    if filereadable($HOME . "/nvim.local/sessions/" . FindSession())
-      let l:choice = confirm("Overwrite session?", "&Yes\n&No", 1)
-      if l:choice == 1
-        let l:name = CreateSession()
-      else
-        let l:name = ""
-      end
-    else
-      let l:name = CreateSession()
-    end
+    let l:arg = ""
+    let l:sesh = sesh#FindSession()
   elseif a:0 > 0 && a:1 != "" 
-    if filereadable($HOME . "/nvim.local/sessions/" . FindSession(a:1))
-      let l:choice = confirm("Overwrite session?", "&Yes\n&No", 1)
-      if l:choice == 1
-        let l:name = CreateSession(a:1)
-      else
-        let l:name = ""
-      end
+    let l:arg = a:1
+    let l:sesh = sesh#FindSession(l:arg)
+  end
+
+  if filereadable($HOME . "/nvim.local/sessions/" . l:sesh)
+    let l:choice = confirm("Overwrite session?", "&Yes\n&No", 1)
+    if l:choice == 1
+      let l:name = sesh#CreateSession(l:arg)
     else
-      let l:name = CreateSession(a:1)
+      let l:name = ""
     end
+  else
+    let l:name = sesh#CreateSession(l:arg)
   end
 
   if l:name != ""
