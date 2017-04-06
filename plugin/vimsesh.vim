@@ -52,9 +52,11 @@ aug PluginSession
   au!
   au VimEnter * if expand('<afile>') == "" | call RestoreSession()
   au VimLeave * call SaveSession()
-  au VimLeave * call DoRedir(g:session_options)
+  au VimLeave * call vimsesh#DoRedir(g:session_options)
 aug END
 
+command! -nargs=* -complete=customlist,vimsesh#SeshComplete SaveSession call vimsesh#SaveSession(<f-args>)
+command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSession call vimsesh#RestoreSession(<f-args>)
 
 let g:loaded_vimsesh = 1
 
