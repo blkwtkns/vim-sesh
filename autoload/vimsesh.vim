@@ -2,9 +2,12 @@
 " Filename: autoload/vim-sesh.vim
 " Author: blkwtkns
 " =============================================================================
+if exists('g:autoloaded_vimsesh') || &cp
+  finish
+end
 
-let s:save_cpo = &cpo
-set cpo&vim
+" let s:save_cpo = &cpo
+" set cpo&vim
 
 " This will be for restore function
 " Make this return name, branch, and directory
@@ -42,7 +45,25 @@ endfun
 
 fun! sesh#RestoreSession(...)
   if a:0 == 0 || a:1 == ""
-    let l:info = sesh#FindSession()
+      let l:choice = confirm("Restore which session:", "&Default\n&Last\n&Cancel", 0)
+    " end
+
+    if l:choice == 1
+      let l:info = sesh#FindSession()
+    end
+
+    if l:choice == 2 && g:session_options[0] != ''
+      execute 'source ' . $HOME . "/nvim.local/sessions/" . g:session_options[0]
+      return
+    end
+
+    if l:choice == 2 && g:session_options[0] == ''
+      return
+    end
+
+    if l:choice == 3
+      return
+    end
   else
     " TODO: TEST TEST TEST
     let l:arglen = len(a:1)
@@ -62,8 +83,8 @@ fun! sesh#RestoreSession(...)
   end
 
   if filereadable($HOME . "/nvim.local/sessions/" . l:name)
-    " Allows for new sessions to be loaded and not overlap
-     %bwipeout
+    %bwipeout
+    let g:session_options[0] = l:name
     execute 'source ' . $HOME . "/nvim.local/sessions/" . l:name
   else
     echo 'No session found'
@@ -83,8 +104,29 @@ endfun
 
 fun! sesh#SaveSession(...)
   if a:0 == 0 || a:1 == ""
-    let l:arg = ""
-    let l:info = sesh#FindSession()
+    let l:current = confirm("Save session as:", "&Current\n&Default\n&Exit", 0)
+    echo l:current
+
+    if g:session_options[0] != '' && l:current == 1
+      if(argc() > 0)
+        execute 'argd *'
+      end
+      execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . g:session_options[0]
+      return
+    end
+
+    if g:session_options[0] == '' && l:current == 1
+      return
+    end
+
+    if l:current == 2
+      let l:arg = ""
+      let l:info = sesh#FindSession()
+    end
+
+    if l:current == 3
+      return
+    end
   else
     " TODO: TEST TEST TEST
     let l:arglen = len(a:1)
@@ -104,7 +146,7 @@ fun! sesh#SaveSession(...)
   end
 
   if filereadable($HOME . "/nvim.local/sessions/" . l:name)
-    let l:choice = confirm("Overwrite session?", "&Yes\n&No", 1)
+    let l:choice = confirm("Overwrite session?", "&Yes\n&No", 2)
     if l:choice == 1
       let l:name = sesh#CreateSession(l:info)
     else
@@ -119,14 +161,12 @@ fun! sesh#SaveSession(...)
     if(argc() > 0)
       execute 'argd *'
     end
+    let g:session_options[0] = l:name
     execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . l:name
   else
     echo 'Session save halted'
   end
 endfun
-
-" command! -nargs=? SaveSession call SaveSession(<f-args>)
-" command! -nargs=? RestoreSession call RestoreSession(<f-args>)
 
 fun! sesh#SeshComplete(ArgLead, CmdLine, CursorPos)
   " return ['one', 'two', 'three']
@@ -201,5 +241,8 @@ endfun
 " command! FindProj call sesh#FindSession()
 
 
-let &cpo = s:save_cpo
-unlet s:save_cpo
+" let &cpo = s:save_cpo
+" unlet s:save_cpo
+
+let g:autoloaded_vimsesh = 1
+" vim:set et sw=2 ts=2 tw=78 fdm=marker
