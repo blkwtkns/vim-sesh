@@ -11,7 +11,7 @@ endif
 let s:save_cpo = &cpo
 set cpo&vim
 
-" TODO: allow particular sessions to be kept in actual project
+" TODO: allow optionality for sessions to be kept in actual project
 fun! vimsesh#FindSession(...)
   let l:name = getcwd()
   " Check if located within a repo
@@ -64,7 +64,6 @@ fun! vimsesh#RestoreSession(...)
       return
     end
   else
-    " TODO: TEST TEST TEST
     let l:arglen = len(a:1)
 
     if strpart(a:1, l:arglen - 4) == '.vim'
@@ -127,7 +126,6 @@ fun! vimsesh#SaveSession(...)
       return
     end
   else
-    " TODO: TEST TEST TEST
     let l:arglen = len(a:1)
 
     if strpart(a:1, l:arglen - 4) == '.vim'
@@ -173,7 +171,7 @@ fun! vimsesh#DoRedir(options)
 endfun
 
 fun! vimsesh#SeshComplete(ArgLead, CmdLine, CursorPos)
-  " return ['one', 'two', 'three']
+  " return a list
     let l:info = vimsesh#FindSession()
     return map(split(glob($HOME . '/nvim.local/sessions/' . l:info[0] . '/' .'*.vim'), "\n"), 'fnamemodify(v:val, ":t")')
 endfun
@@ -226,7 +224,7 @@ fun! vimsesh#Gbranch_detect(path) abort
   end
 endfun
 
-
+" This is a little dangerous right now...
 if !exists('g:session_directory')
   if executable('nvim')
     let g:session_directory = expand($HOME.'/nvim.local/sessions')
@@ -240,7 +238,7 @@ if !exists('g:session_directory')
   end
 end
 
-
+" session file for persistent data
 if !exists('g:session_meta')
   let g:session_meta = g:session_directory.'/'.'.metaseshrc'
 end
@@ -252,6 +250,11 @@ let g:session_sourced = 0
 " Make metasesh file
 if !filereadable(g:session_meta)
   call system('touch ' . g:session_meta)
+end
+
+" Auto command optionality
+if !exists('g:session_autocmds')
+  let g:session_autocmds = 1
 end
 
 if filereadable(''. g:session_meta) && match(readfile(expand("".g:session_meta)),"text")
@@ -268,11 +271,13 @@ end
 command! -nargs=* -complete=customlist,vimsesh#SeshComplete SaveSession call vimsesh#SaveSession(<f-args>)
 command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSession call vimsesh#RestoreSession(<f-args>)
 
-aug PluginSession
-  au!
-  au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSession()
-  au VimLeave * call vimsesh#SaveSession()
-  au VimLeave * call vimsesh#DoRedir(g:session_options)
-aug END
+if g:session_autocmds == 1
+  aug PluginSession
+    au!
+    au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSession()
+    au VimLeave * call vimsesh#SaveSession()
+    au VimLeave * call vimsesh#DoRedir(g:session_options)
+  aug END
+end
 
 let g:loaded_qf = 1
