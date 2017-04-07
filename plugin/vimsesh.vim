@@ -2,13 +2,11 @@
 " vim-sesh - Simple project/workspace management
 " Maintainer:	blkwtkns <iamssoblake@gmail.com>
 " Version:	0.1.0
-" License:	MIT
 " Location:	plugin/vimsesh.vim
 " Website:	https://github.com/blkwtkns/vim-sesh =============================================================================
-if exists("g:loaded_vimsesh") || v:version < 703 || &compatible
-    finish
+if exists("g:loaded_vimsesh") || &cp    
+  finish
 endif
-let g:loaded_qf = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -279,5 +277,4 @@ aug END
 
 
 
-let &cpo = s:save_cpo
-" unlet s:save_cpo
+let g:loaded_qf = 1
