@@ -1,10 +1,9 @@
-*vim-sesh.txt*	Vim session management tool
+*vimsesh.txt*	Vim session management tool
 
 Version: 0.0
 Author: blkwtkns (https://github.com/blkwtkns)
-License: MIT License
 Repository: https://github.com/blkwtkns/vim-sesh
-Last Change: 2017/03/26 18:11:22.
+Last Change: 2017/04/6 22:25:22.
 
 CONTENTS					*vim-sesh-contents*
 
