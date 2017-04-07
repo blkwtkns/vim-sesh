@@ -4,7 +4,7 @@
 " Version:	0.1.0
 " Location:	plugin/vimsesh.vim
 " Website:	https://github.com/blkwtkns/vim-sesh =============================================================================
-if exists("g:loaded_vimsesh") || &cp    
+if exists("g:loaded_vimsesh") || &cp
   finish
 endif
 
@@ -270,11 +270,9 @@ command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSession call 
 
 aug PluginSession
   au!
-  au VimEnter * if expand('<afile>') == "" | call RestoreSession()
-  au VimLeave * call SaveSession()
+  au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSession()
+  au VimLeave * call vimsesh#SaveSession()
   au VimLeave * call vimsesh#DoRedir(g:session_options)
 aug END
-
-
 
 let g:loaded_qf = 1
