@@ -176,6 +176,9 @@ fun! vimsesh#SeshComplete(ArgLead, CmdLine, CursorPos)
     return map(split(glob($HOME . '/nvim.local/sessions/' . l:info[0] . '/' .'*.vim'), "\n"), 'fnamemodify(v:val, ":t")')
 endfun
 
+" ====================================================================
+" Git related functions
+" ====================================================================
 " Courtesy itchyny's vim-gitbranch - expand if fugitive dependency unwanted
 fun! vimsesh#Gbranch_name() abort
   if get(b:, 'gitbranch_pwd', '') !=# expand('%:p:h') || !has_key(b:, 'gitbranch_path')
@@ -224,6 +227,9 @@ fun! vimsesh#Gbranch_detect(path) abort
   end
 endfun
 
+" ====================================================================
+" Global variables and setup
+" ====================================================================
 " This is a little dangerous right now...
 if !exists('g:session_directory')
   if executable('nvim')
@@ -268,9 +274,15 @@ end
 " Add logic for session deletion
 " Add logic for restore options to default
 
+" ====================================================================
+" Commands
+" ====================================================================
 command! -nargs=* -complete=customlist,vimsesh#SeshComplete SaveSession call vimsesh#SaveSession(<f-args>)
 command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSession call vimsesh#RestoreSession(<f-args>)
 
+" ====================================================================
+" Auto Commands
+" ====================================================================
 if g:session_autocmds == 1
   aug PluginSession
     au!
