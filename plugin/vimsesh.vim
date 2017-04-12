@@ -1,6 +1,6 @@
 " =============================================================================
 " vim-sesh - Simple project/workspace management
-" Maintainer:	blkwtkns <iamssoblake@gmail.com>
+" Maintainer:	blkwtkns <iamsoblake@gmail.com>
 " Version:	0.1.0
 " Location:	plugin/vimsesh.vim
 " Website:	https://github.com/blkwtkns/vim-sesh =============================================================================
