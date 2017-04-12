@@ -292,4 +292,4 @@ if g:session_autocmds == 1
   aug END
 end
 
-let g:loaded_qf = 1
+let g:loaded_vimsesh = 1
