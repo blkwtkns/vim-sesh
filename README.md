@@ -1,6 +1,6 @@
 # vim-sesh
 
-## Try it out, break it and give me feedback!
+## Need feedback!
 I really wanted an easy and intuitive way to create, save, and restore vim sessions. I wanted it to be integrated with git and branching if git is involved. I also wanted to the ability to create default sessions or personally named sessions. And instead of having session files litered throughout my projects, I wanted my sessions to be in one place (as is the norm with vim session users), which would also give me the ability to even version the sessions so that others can easily pull them and remotely see specific branch projects. 
 
 I'm trying to build on optionality, and I need edge case input as well, so any input or suggestions are welcomed. The code isn't the prettiest yet, but refactoring will come (this is my first plugin, please be brutal).
