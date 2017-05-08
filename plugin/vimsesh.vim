@@ -299,7 +299,7 @@ command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSesh call vim
 " ====================================================================
 " Auto Commands
 " ====================================================================
-if g:session_autocmds == 1
+if g:sesh_autocmds == 1
   aug PluginSesh
     au!
     au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSesh()
