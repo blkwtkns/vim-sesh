@@ -7,6 +7,10 @@ I'm trying to build on optionality, and I need edge case input as well, so any i
 
 ## Features
 Break down to come, unitl then check out the code, it's pretty small
+* Use 'let g:sesh_directory' to set session destination
+  Neovim default: $HOME/nvim.local/sessions
+  Vim default: $HOME/.vim/sessions
+* Use 'let g:sesh_autocmds' to enable autocommands (Default 0)
 
 ### TODO:
 * session pruning

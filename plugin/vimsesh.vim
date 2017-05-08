@@ -303,7 +303,7 @@ command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSesh call vim
 
 " Auto command optionality
 if !exists('g:sesh_autocmds')
-  let g:sesh_autocmds = 1
+  let g:sesh_autocmds = 0
 end
 
 if g:sesh_autocmds == 1
