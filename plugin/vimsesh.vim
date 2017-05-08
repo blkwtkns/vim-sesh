@@ -146,17 +146,20 @@ fun! vimsesh#SaveSesh(...)
     let l:name = l:info[0] . '/' . l:info[1] . '.vim'
   end
 
-  if filereadable($HOME . "/nvim.local/sessions/" . l:name)
-    let l:choice = confirm("Overwrite session?", "&Yes\n&No", 2)
-    if l:choice == 1
-      let l:name = vimsesh#CreateSesh(l:info)
-    else
-      echo 'Save cancelled'
-      return
-    end
-  else
-    let l:name = vimsesh#CreateSesh(l:info)
-  end
+  " prompt for overwrite
+  " if filereadable($HOME . "/nvim.local/sessions/" . l:name)
+  "   let l:choice = confirm("Overwrite session?", "&Yes\n&No", 2)
+  "   if l:choice == 1
+  "     let l:name = vimsesh#CreateSesh(l:info)
+  "   else
+  "     echo 'Save cancelled'
+  "     return
+  "   end
+  " else
+  "   let l:name = vimsesh#CreateSesh(l:info)
+  " end
+
+  let l:name = vimsesh#CreateSesh(l:info)
 
   if l:name != ""
     " TODO: Need to save args first, then restore if deleted
@@ -172,12 +175,7 @@ fun! vimsesh#SaveSesh(...)
   return
 endfun
 
-" metasession function
-" fun! vimsesh#DoRedir(options)
-"   let g:metasesh_options = a:options
-"   call writefile(g:metasesh_options, expand(''.g:session_meta), "b")
-" endfun
-
+" Generate list of current available sessions related to directory
 fun! vimsesh#SeshComplete(ArgLead, CmdLine, CursorPos)
   " return a list
     let l:info = vimsesh#FindSesh()
@@ -257,6 +255,9 @@ if !exists('g:sesh_directory')
   end
 end
 
+" For keeping track of current session being used
+let g:sesh_options = ['']
+
 " ====================================================================
 " Meta session stuff (was used for caching last session)
 " ====================================================================
@@ -265,19 +266,13 @@ end
 "   let g:sesh_meta = g:session_directory.'/'.'.metaseshrc'
 " end
 
-
-let g:sesh_options = ['']
+" For determination of meta sourcing
 " let g:sesh_sourced = 0
 
 " Make metasesh file
 " if !filereadable(g:sesh_meta)
 "   call system('touch ' . g:sesh_meta)
 " end
-
-" Auto command optionality
-if !exists('g:sesh_autocmds')
-  let g:sesh_autocmds = 1
-end
 
 " if filereadable(''. g:sesh_meta) && match(readfile(expand("".g:sesh_meta)),"text")
 "   let g:sesh_option_check = readfile(expand("".g:sesh_meta), 'b')
@@ -286,6 +281,12 @@ end
 "     let g:sesh_sourced = 1
 "   end
 " end
+
+" metasession function
+" fun! vimsesh#DoRedir(options)
+"   let g:metasesh_options = a:options
+"   call writefile(g:metasesh_options, expand(''.g:session_meta), "b")
+" endfun
 
 " Add logic for session deletion
 " Add logic for restore options to default
@@ -299,6 +300,12 @@ command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSesh call vim
 " ====================================================================
 " Auto Commands
 " ====================================================================
+
+" Auto command optionality
+if !exists('g:sesh_autocmds')
+  let g:sesh_autocmds = 1
+end
+
 if g:sesh_autocmds == 1
   aug PluginSesh
     au!
