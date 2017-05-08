@@ -12,7 +12,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " TODO: allow optionality for sessions to be kept in actual project
-fun! vimsesh#FindSession(...)
+fun! vimsesh#FindSesh(...)
   let l:name = getcwd()
   " Check if located within a repo
   if !isdirectory(".git")
@@ -42,7 +42,7 @@ fun! vimsesh#FindSession(...)
   return l:info
 endfun
 
-fun! vimsesh#RestoreSession(...)
+fun! vimsesh#RestoreSesh(...)
   if a:0 == 0 || a:1 == ""
       " let l:choice = confirm("Restore which session:", "&Default\n&Last\n&Cancel", 0)
 
@@ -50,7 +50,7 @@ fun! vimsesh#RestoreSession(...)
     "   let l:info = vimsesh#FindSession()
     " end
 
-    let l:info = vimsesh#FindSession()
+    let l:info = vimsesh#FindSesh()
     " if l:choice == 2 && g:session_options[0] != ''
     "   execute 'source ' . $HOME . "/nvim.local/sessions/" . g:session_options[0]
     "   return
@@ -72,7 +72,7 @@ fun! vimsesh#RestoreSession(...)
     else
       let l:param = a:1
     end
-    let l:info = vimsesh#FindSession(l:param)
+    let l:info = vimsesh#FindSesh(l:param)
   end
 
   if len(l:info) > 2
@@ -83,7 +83,7 @@ fun! vimsesh#RestoreSession(...)
 
   if filereadable($HOME . "/nvim.local/sessions/" . l:name)
     %bwipeout
-    let g:session_options[0] = l:name
+    let g:sesh_options[0] = l:name
     execute 'source ' . $HOME . "/nvim.local/sessions/" . l:name
   else
     echo 'No session found'
@@ -91,7 +91,7 @@ fun! vimsesh#RestoreSession(...)
   return
 endfun
 
-fun! vimsesh#CreateSession(info)
+fun! vimsesh#CreateSesh(info)
     if !isdirectory($HOME . "/nvim.local/sessions/" . a:info[0])
       call mkdir($HOME . "/nvim.local/sessions/" . a:info[0], "p")
     endif
@@ -102,27 +102,27 @@ fun! vimsesh#CreateSession(info)
   end
 endfun
 
-fun! vimsesh#SaveSession(...)
+fun! vimsesh#SaveSesh(...)
   if a:0 == 0 || a:1 == ""
     let l:current = confirm("Save session as:", "&Current\n&Default\n&Exit", 0)
 
-    if g:session_options[0] != '' && l:current == 1
+    if g:sesh_options[0] != '' && l:current == 1
       if(argc() > 0)
         execute 'argd *'
       end
-      execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . g:session_options[0]
+      execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . g:sesh_options[0]
       echo 'Current session saved'
       return
     end
 
-    if g:session_options[0] == '' && l:current == 1
+    if g:sesh_options[0] == '' && l:current == 1
       echo 'Current workspace is not a session yet'
       return
     end
 
     if l:current == 2
       let l:arg = ""
-      let l:info = vimsesh#FindSession()
+      let l:info = vimsesh#FindSesh()
     end
 
     if l:current == 3
@@ -137,7 +137,7 @@ fun! vimsesh#SaveSession(...)
     else
       let l:param = a:1
     end
-    let l:info = vimsesh#FindSession(l:param)
+    let l:info = vimsesh#FindSesh(l:param)
   end
 
   if len(l:info) > 2
@@ -149,13 +149,13 @@ fun! vimsesh#SaveSession(...)
   if filereadable($HOME . "/nvim.local/sessions/" . l:name)
     let l:choice = confirm("Overwrite session?", "&Yes\n&No", 2)
     if l:choice == 1
-      let l:name = vimsesh#CreateSession(l:info)
+      let l:name = vimsesh#CreateSesh(l:info)
     else
       echo 'Save cancelled'
       return
     end
   else
-    let l:name = vimsesh#CreateSession(l:info)
+    let l:name = vimsesh#CreateSesh(l:info)
   end
 
   if l:name != ""
@@ -163,7 +163,7 @@ fun! vimsesh#SaveSession(...)
     if(argc() > 0)
       execute 'argd *'
     end
-    let g:session_options[0] = l:name
+    let g:sesh_options[0] = l:name
     execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . l:name
     echo 'Session saved!'
   else
@@ -180,7 +180,7 @@ endfun
 
 fun! vimsesh#SeshComplete(ArgLead, CmdLine, CursorPos)
   " return a list
-    let l:info = vimsesh#FindSession()
+    let l:info = vimsesh#FindSesh()
     return map(split(glob($HOME . '/nvim.local/sessions/' . l:info[0] . '/' .'*.vim'), "\n"), 'fnamemodify(v:val, ":t")')
 endfun
 
@@ -239,21 +239,21 @@ endfun
 " Global variables and setup
 " ====================================================================
 " This is a little dangerous right now...
-if !exists('g:session_directory')
+if !exists('g:sesh_directory')
   if executable('nvim')
 
     if !isdirectory($HOME.'/nvim.local/sessions')
       call mkdir($HOME.'/nvim.local/sessions')
     end
 
-    let g:session_directory = expand($HOME.'/nvim.local/sessions')
+    let g:sesh_directory = expand($HOME.'/nvim.local/sessions')
   else
 
     if !isdirectory($HOME.'/.vim/sessions')
       call mkdir($HOME.'/.vim/sessions')
     end
 
-    let g:session_directory = expand($HOME.'/.vim/sessions')
+    let g:sesh_directory = expand($HOME.'/.vim/sessions')
   end
 end
 
@@ -261,29 +261,29 @@ end
 " Meta session stuff (was used for caching last session)
 " ====================================================================
 " session file for persistent data
-" if !exists('g:session_meta')
-"   let g:session_meta = g:session_directory.'/'.'.metaseshrc'
+" if !exists('g:sesh_meta')
+"   let g:sesh_meta = g:session_directory.'/'.'.metaseshrc'
 " end
 
 
-let g:session_options = ['']
-" let g:session_sourced = 0
+let g:sesh_options = ['']
+" let g:sesh_sourced = 0
 
 " Make metasesh file
-" if !filereadable(g:session_meta)
-"   call system('touch ' . g:session_meta)
+" if !filereadable(g:sesh_meta)
+"   call system('touch ' . g:sesh_meta)
 " end
 
 " Auto command optionality
-if !exists('g:session_autocmds')
-  let g:session_autocmds = 1
+if !exists('g:sesh_autocmds')
+  let g:sesh_autocmds = 1
 end
 
-" if filereadable(''. g:session_meta) && match(readfile(expand("".g:session_meta)),"text")
-"   let g:sesh_option_check = readfile(expand("".g:session_meta), 'b')
+" if filereadable(''. g:sesh_meta) && match(readfile(expand("".g:sesh_meta)),"text")
+"   let g:sesh_option_check = readfile(expand("".g:sesh_meta), 'b')
 "   if len(g:sesh_option_check) > 0 && g:sesh_option_check[0] != ''
-"     let g:session_options[0] = g:sesh_option_check[0]
-"     let g:session_sourced = 1
+"     let g:sesh_options[0] = g:sesh_option_check[0]
+"     let g:sesh_sourced = 1
 "   end
 " end
 
@@ -293,17 +293,17 @@ end
 " ====================================================================
 " Commands
 " ====================================================================
-command! -nargs=* -complete=customlist,vimsesh#SeshComplete SaveSession call vimsesh#SaveSession(<f-args>)
-command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSession call vimsesh#RestoreSession(<f-args>)
+command! -nargs=* -complete=customlist,vimsesh#SeshComplete SaveSesh call vimsesh#SaveSesh(<f-args>)
+command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSesh call vimsesh#RestoreSesh(<f-args>)
 
 " ====================================================================
 " Auto Commands
 " ====================================================================
 if g:session_autocmds == 1
-  aug PluginSession
+  aug PluginSesh
     au!
-    au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSession()
-    au VimLeave * call vimsesh#SaveSession()
+    au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSesh()
+    au VimLeave * call vimsesh#SaveSesh()
     " au VimLeave * call vimsesh#DoRedir(g:session_options)
   aug END
 end
