@@ -11,13 +11,39 @@ endif
 let s:save_cpo = &cpo
 set cpo&vim
 
+" ====================================================================
+" Auto Commands
+" ====================================================================
+
+" Auto command optionality
+if !exists('g:sesh_autocmds')
+  let g:sesh_autocmds = 0
+end
+
+" Save sessions in directory for version control
+if !exists('g:sesh_versioning')
+  let g:sesh_versioning = 0
+end
+
+if g:sesh_autocmds == 1
+  aug PluginSesh
+    au!
+    au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSesh()
+    au VimLeave * call vimsesh#SaveSesh()
+    " au VimLeave * call vimsesh#DoRedir(g:session_options)
+  aug END
+end
+
+
 " TODO: allow optionality for sessions to be kept in actual project
 fun! vimsesh#FindSesh(...)
-  let l:name = getcwd()
+  let l:name = vimsesh#FindVersionDir(expand('%:p:h'))
+
+  " let l:name = getcwd()
   " Check if located within a repo
-  if !isdirectory(".git")
-    let l:name = substitute(finddir(".git", ".;"), "/.git", "", "")
-  end
+  " if !isdirectory(".git")
+  "   let l:name = substitute(finddir(".git", ".;"), "/.git", "", "")
+  " end
 
   if l:name != ""
     let l:name = matchstr(l:name, ".*", strridx(l:name, "/") + 1)
@@ -81,6 +107,20 @@ fun! vimsesh#RestoreSesh(...)
     let l:name = l:info[0] . '/' . l:info[1] . '.vim'
   end
 
+
+  if g:sesh_versioning == 1
+    " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
+    " if filereadable(l:versionpath . ".vimsessions/" . l:name)
+    if filereadable(g:sesh_version_directory . l:name)
+      %bwipeout
+      let g:sesh_options[0] = l:name
+      execute 'source ' . g:sesh_version_directory . l:name
+    else
+      echo 'No session found'
+    end
+    return
+  end
+
   if filereadable($HOME . "/nvim.local/sessions/" . l:name)
     %bwipeout
     let g:sesh_options[0] = l:name
@@ -92,9 +132,18 @@ fun! vimsesh#RestoreSesh(...)
 endfun
 
 fun! vimsesh#CreateSesh(info)
+
+  if g:sesh_versioning == 1
+    " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
+    if !isdirectory(g:sesh_version_directory . a:info[0])
+      call mkdir(g:sesh_version_directory . a:info[0], "p")
+    endif
+  else
     if !isdirectory($HOME . "/nvim.local/sessions/" . a:info[0])
       call mkdir($HOME . "/nvim.local/sessions/" . a:info[0], "p")
     endif
+  end
+
   if len(a:info) > 2
     return a:info[0] . '/' . a:info[2] . '.vim'
   else
@@ -110,8 +159,16 @@ fun! vimsesh#SaveSesh(...)
       if(argc() > 0)
         execute 'argd *'
       end
+
+      if g:sesh_versioning == 1
+        " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
+        execute 'mksession! ' . g:sesh_version_directory . g:sesh_options[0]
+        echo 'Current session saved to .vimsessions directory'
+        return
+      end
+
       execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . g:sesh_options[0]
-      echo 'Current session saved'
+      echo 'Current session saved to global sessions directory'
       return
     end
 
@@ -160,6 +217,7 @@ fun! vimsesh#SaveSesh(...)
   " end
 
   let l:name = vimsesh#CreateSesh(l:info)
+  " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
 
   if l:name != ""
     " TODO: Need to save args first, then restore if deleted
@@ -167,8 +225,13 @@ fun! vimsesh#SaveSesh(...)
       execute 'argd *'
     end
     let g:sesh_options[0] = l:name
-    execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . l:name
-    echo 'Session saved!'
+    if g:sesh_versioning == 1
+      execute 'mksession! ' . g:sesh_version_directory . l:name
+      echo 'Versioned session saved!'
+    else
+      execute 'mksession! ' . $HOME . '/nvim.local/sessions/' . l:name
+      echo 'Session saved!'
+    end
   else
     echo 'Session could not be saved'
   end
@@ -177,9 +240,14 @@ endfun
 
 " Generate list of current available sessions related to directory
 fun! vimsesh#SeshComplete(ArgLead, CmdLine, CursorPos)
-  " return a list
-    let l:info = vimsesh#FindSesh()
+" return a list
+  let l:info = vimsesh#FindSesh()
+  " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
+  if g:sesh_versioning == 1
+    return map(split(glob(g:sesh_version_directory . l:info[0] . '/' .'*.vim'), "\n"), 'fnamemodify(v:val, ":t")')
+  else
     return map(split(glob($HOME . '/nvim.local/sessions/' . l:info[0] . '/' .'*.vim'), "\n"), 'fnamemodify(v:val, ":t")')
+  end
 endfun
 
 " ====================================================================
@@ -236,24 +304,59 @@ endfun
 " ====================================================================
 " Global variables and setup
 " ====================================================================
+fun! vimsesh#FindVersionDir(path)
+  let l:path = a:path
+  let l:prev = ''
+  while l:path !=# prev
+    let l:dir = l:path . '/.git'
+    let l:type = getftype(l:dir)
+    if l:type ==# 'dir' && isdirectory(l:dir.'/objects') && isdirectory(l:dir.'/refs') && getfsize(l:dir.'/HEAD') > 10
+      let l:reldir = get(readfile(l:dir), 0, '')
+      return simplify(l:path . '/' . l:reldir[8:])
+    elseif l:type ==# 'file'
+      let l:reldir = get(readfile(l:dir), 0, '')
+      if l:reldir =~# '^gitdir: '
+        return simplify(l:path . '/' . l:reldir[8:])
+      end
+    end
+    let l:prev = l:path
+    let l:path = fnamemodify(l:path, ':h')
+  endwhile
+  return ''
+endf
+
+fun! vimsesh#Create_versioning_dir()
+  let l:path = vimsesh#FindVersionDir(expand('%:p:h'))
+  if !isdirectory(l:path.'.vimsessions')
+    call mkdir(l:path.'.vimsessions')
+  end
+  let g:sesh_version_directory = l:path.'.vimsessions/'
+endf
+
+
 " This is a little dangerous right now...
-if !exists('g:sesh_directory')
-  if executable('nvim')
+if g:sesh_versioning == 1
+  call vimsesh#Create_versioning_dir()
+else
+  if !exists('g:sesh_directory')
+    if executable('nvim')
 
-    if !isdirectory($HOME.'/nvim.local/sessions')
-      call mkdir($HOME.'/nvim.local/sessions')
+      if !isdirectory($HOME.'/nvim.local/sessions')
+        call mkdir($HOME.'/nvim.local/sessions')
+      end
+
+      let g:sesh_directory = expand($HOME.'/nvim.local/sessions')
+    else
+
+      if !isdirectory($HOME.'/.vim/sessions')
+        call mkdir($HOME.'/.vim/sessions')
+      end
+
+      let g:sesh_directory = expand($HOME.'/.vim/sessions')
     end
-
-    let g:sesh_directory = expand($HOME.'/nvim.local/sessions')
-  else
-
-    if !isdirectory($HOME.'/.vim/sessions')
-      call mkdir($HOME.'/.vim/sessions')
-    end
-
-    let g:sesh_directory = expand($HOME.'/.vim/sessions')
   end
 end
+
 
 " For keeping track of current session being used
 let g:sesh_options = ['']
@@ -296,23 +399,5 @@ let g:sesh_options = ['']
 " ====================================================================
 command! -nargs=* -complete=customlist,vimsesh#SeshComplete SaveSesh call vimsesh#SaveSesh(<f-args>)
 command! -nargs=* -complete=customlist,vimsesh#SeshComplete RestoreSesh call vimsesh#RestoreSesh(<f-args>)
-
-" ====================================================================
-" Auto Commands
-" ====================================================================
-
-" Auto command optionality
-if !exists('g:sesh_autocmds')
-  let g:sesh_autocmds = 0
-end
-
-if g:sesh_autocmds == 1
-  aug PluginSesh
-    au!
-    au VimEnter * if expand('<afile>') == "" | call vimsesh#RestoreSesh()
-    au VimLeave * call vimsesh#SaveSesh()
-    " au VimLeave * call vimsesh#DoRedir(g:session_options)
-  aug END
-end
 
 let g:loaded_vimsesh = 1
