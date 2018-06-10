@@ -279,7 +279,7 @@ endf
 fun! vimsesh#FindVersionDir()
   let l:name = getcwd()
   " Check if located within a repo
-  if !isdirectory(".git")
+  if !isdirectory(".git") && !filereadable(".git")
     let l:name = substitute(finddir(".git", ".;"), "/.git", "", "")
   end
   return l:name
