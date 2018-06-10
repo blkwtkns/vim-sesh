@@ -114,7 +114,7 @@ endfun
 
 fun! vimsesh#CreateSesh(info)
 
-  if g:sesh_versioning == 1
+  if g:sesh_versioning == 1 && len(vimsesh#Gbranch_name())
     " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
     if !isdirectory(g:sesh_version_directory . a:info[0])
       call mkdir(g:sesh_version_directory . a:info[0], "p")
@@ -141,7 +141,7 @@ fun! vimsesh#SaveSesh(...)
         execute 'argd *'
       end
 
-      if g:sesh_versioning == 1
+      if g:sesh_versioning == 1 && len(vimsesh#Gbranch_name())
         " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
         execute 'mksession! ' . g:sesh_version_directory . g:sesh_options[0]
         echo 'Current session saved to .vimsessions directory'
@@ -193,7 +193,7 @@ fun! vimsesh#SaveSesh(...)
       execute 'argd *'
     end
     let g:sesh_options[0] = l:name
-    if g:sesh_versioning == 1
+    if g:sesh_versioning == 1 && len(vimsesh#Gbranch_name())
       execute 'mksession! ' . g:sesh_version_directory . l:name
       echo 'Versioned session saved!'
     else
@@ -211,7 +211,7 @@ fun! vimsesh#SeshComplete(ArgLead, CmdLine, CursorPos)
 " return a list
   let l:info = vimsesh#FindSesh()
   " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
-  if g:sesh_versioning == 1
+  if g:sesh_versioning == 1 && len(vimsesh#Gbranch_name())
     return map(split(glob(g:sesh_version_directory . l:info[0] . '/' .'*.vim'), "\n"), 'fnamemodify(v:val, ":t")')
   else
     return map(split(glob($HOME . '/nvim.local/sessions/' . l:info[0] . '/' .'*.vim'), "\n"), 'fnamemodify(v:val, ":t")')
@@ -269,8 +269,17 @@ fun! vimsesh#Gbranch_detect(path) abort
   end
 endfun
 
-fun! vimsesh#Get_sha(...)
-  return system('git rev-parse HEAD')
+fun! vimsesh#Get_sha() abort
+  " return system('git rev-parse HEAD')
+  let l:branch_name = vimsesh#Gbranch_name()
+  if len(vimsesh#Gbranch_name())
+    let l:dir = vimsesh#Gbranch_dir(expand('%:p:h'))
+    if l:dir !=# ''
+      let l:ref = l:dir.'/refs/heads/'.l:branch_name
+      let l:sha = get(readfile(l:ref), 0, '')
+      return strpart(l:sha, 0, 7)
+    end
+  end
 endf
 
 " ====================================================================
@@ -287,14 +296,14 @@ endf
 
 fun! vimsesh#Create_versioning_dir()
   let l:path = vimsesh#FindVersionDir()
-  if !isdirectory(l:path."/.vimsessions/")
+  if !isdirectory(l:path."/.vimsessions/") && len(vimsesh#Gbranch_name())
     call mkdir(l:path."/.vimsessions/")
   end
   let g:sesh_version_directory = expand(l:path."/.vimsessions/")
 endf
 
 " This is a little dangerous right now...
-if g:sesh_versioning == 1
+if g:sesh_versioning == 1 && len(vimsesh#Gbranch_name())
   if !exists('g:sesh_version_directory')
     call vimsesh#Create_versioning_dir()
   end
