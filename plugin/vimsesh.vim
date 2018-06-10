@@ -37,7 +37,7 @@ end
 
 " TODO: allow optionality for sessions to be kept in actual project
 fun! vimsesh#FindSesh(...)
-  let l:name = vimsesh#FindVersionDir(expand('%:p:h'))
+  let l:name = vimsesh#FindVersionDir()
 
   " let l:name = getcwd()
   " Check if located within a repo
@@ -70,26 +70,7 @@ endfun
 
 fun! vimsesh#RestoreSesh(...)
   if a:0 == 0 || a:1 == ""
-      " let l:choice = confirm("Restore which session:", "&Default\n&Last\n&Cancel", 0)
-
-    " if l:choice == 1
-    "   let l:info = vimsesh#FindSession()
-    " end
-
     let l:info = vimsesh#FindSesh()
-    " if l:choice == 2 && g:session_options[0] != ''
-    "   execute 'source ' . $HOME . "/nvim.local/sessions/" . g:session_options[0]
-    "   return
-    " end
-
-    " if l:choice == 2 && g:session_options[0] == ''
-    "   return
-    " end
-
-    " if l:choice == 3
-    "   echo 'Restore cancelled'
-    "   return
-    " end
   else
     let l:arglen = len(a:1)
 
@@ -203,19 +184,6 @@ fun! vimsesh#SaveSesh(...)
     let l:name = l:info[0] . '/' . l:info[1] . '.vim'
   end
 
-  " prompt for overwrite
-  " if filereadable($HOME . "/nvim.local/sessions/" . l:name)
-  "   let l:choice = confirm("Overwrite session?", "&Yes\n&No", 2)
-  "   if l:choice == 1
-  "     let l:name = vimsesh#CreateSesh(l:info)
-  "   else
-  "     echo 'Save cancelled'
-  "     return
-  "   end
-  " else
-  "   let l:name = vimsesh#CreateSesh(l:info)
-  " end
-
   let l:name = vimsesh#CreateSesh(l:info)
   " let l:versionpath = vimsesh#FindVersionDir(expand('%:p:h'))
 
@@ -301,42 +269,35 @@ fun! vimsesh#Gbranch_detect(path) abort
   end
 endfun
 
+fun! vimsesh#Get_sha(...)
+  return system('git rev-parse HEAD')
+endf
+
 " ====================================================================
 " Global variables and setup
 " ====================================================================
-fun! vimsesh#FindVersionDir(path)
-  let l:path = a:path
-  let l:prev = ''
-  while l:path !=# prev
-    let l:dir = l:path . '/.git'
-    let l:type = getftype(l:dir)
-    if l:type ==# 'dir' && isdirectory(l:dir.'/objects') && isdirectory(l:dir.'/refs') && getfsize(l:dir.'/HEAD') > 10
-      let l:reldir = get(readfile(l:dir), 0, '')
-      return simplify(l:path . '/' . l:reldir[8:])
-    elseif l:type ==# 'file'
-      let l:reldir = get(readfile(l:dir), 0, '')
-      if l:reldir =~# '^gitdir: '
-        return simplify(l:path . '/' . l:reldir[8:])
-      end
-    end
-    let l:prev = l:path
-    let l:path = fnamemodify(l:path, ':h')
-  endwhile
-  return ''
+fun! vimsesh#FindVersionDir()
+  let l:name = getcwd()
+  " Check if located within a repo
+  if !isdirectory(".git")
+    let l:name = substitute(finddir(".git", ".;"), "/.git", "", "")
+  end
+  return l:name
 endf
 
 fun! vimsesh#Create_versioning_dir()
-  let l:path = vimsesh#FindVersionDir(expand('%:p:h'))
-  if !isdirectory(l:path.'.vimsessions')
-    call mkdir(l:path.'.vimsessions')
+  let l:path = vimsesh#FindVersionDir()
+  if !isdirectory(l:path."/.vimsessions/")
+    call mkdir(l:path."/.vimsessions/")
   end
-  let g:sesh_version_directory = l:path.'.vimsessions/'
+  let g:sesh_version_directory = expand(l:path."/.vimsessions/")
 endf
-
 
 " This is a little dangerous right now...
 if g:sesh_versioning == 1
-  call vimsesh#Create_versioning_dir()
+  if !exists('g:sesh_version_directory')
+    call vimsesh#Create_versioning_dir()
+  end
 else
   if !exists('g:sesh_directory')
     if executable('nvim')
