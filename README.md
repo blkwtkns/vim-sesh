@@ -23,4 +23,4 @@ His functions at: https://github.com/itchyny/vim-gitbranch allowed me to strip o
 The rest is pretty much logic from here: http://vim.wikia.com/wiki/Go_away_and_come_back that I then bent to my will.
 
 # Cheers!
-# TEST
+# TEST 2
